@@ -1,1 +1,1 @@
-# CampusAtlas
+# Campus Atlas
