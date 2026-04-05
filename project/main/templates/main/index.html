@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Campus Atlas</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map { height: 100vh; width: 100%; }
+        body { margin: 0; padding: 0; font-family: sans-serif; }
+        .overlay { position: absolute; top: 10px; left: 50px; z-index: 1000; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+
+    <div class="overlay">
+        <h1>Campus Atlas</h1>
+        <p>Status: <span style="color: green;">Backend Connected</span></p>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialize map (Centered at a default lat/long - adjust to your campus)
+        var map = L.map('map').setView([17.3850, 78.4867], 15); 
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Test Marker
+        L.marker([17.3850, 78.4867]).addTo(map)
+            .bindPopup('Campus Center')
+            .openPopup();
+    </script>
+</body>
+</html>

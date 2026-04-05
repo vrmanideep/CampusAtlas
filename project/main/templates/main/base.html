@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Atlas</title>
+    <link rel="stylesheet" href="{% static 'main/css/style.css' %}">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- MODERN BASE NAVIGATION BAR --- */
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; }
+        
+        .main-header {
+            background-color: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            height: 70px; /* Perfectly matches the 70px gap we left in the dashboard */
+            position: relative;
+            z-index: 9999;
+        }
+
+        .main-header .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .main-header .logo-area i {
+            font-size: 1.8rem;
+            color: #3498db;
+        }
+
+        .main-header .logo-area h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .main-header nav {
+            display: flex;
+            gap: 25px;
+            align-items: center;
+        }
+
+        .main-header nav a {
+            text-decoration: none;
+            color: #5f6368; /* Dark grey text so it shows up on the white background! */
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .main-header nav a:hover {
+            color: #3498db;
+            background-color: #f1f5f9;
+        }
+
+        /* Distinct styling for the Login/Logout buttons */
+        .main-header nav a.auth-btn {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .main-header nav a.auth-btn:hover {
+            background-color: #2980b9;
+        }
+
+        /* --- RENAMED: Armored Glass Panel --- */
+    .atlas-glass-panel {
+        position: absolute !important;
+        top: 90px !important; /* Pushed down slightly to clear your new navbar */
+        left: 20px !important;
+        z-index: 9999 !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(10px);
+        padding: 15px !important; /* Tighter padding */
+        border-radius: 12px !important;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important;
+        width: 300px !important; /* Strict fixed width */
+        max-width: 300px !important;
+        display: block !important;
+        box-sizing: border-box !important;
+    }
+
+    .atlas-glass-panel .panel-header { 
+        font-size: 1.1rem !important; 
+        color: #1a252f !important; 
+        margin: 0 0 12px 0 !important; 
+        font-weight: 600 !important; 
+    }
+    
+    /* Styled Input Fields - FORCED SMALLER */
+    .atlas-glass-panel .input-box {
+        display: flex !important;
+        align-items: center !important;
+        background: #f1f3f4 !important;
+        border-radius: 6px !important;
+        padding: 0 10px !important; /* Shrunk padding */
+        margin-bottom: 0 !important;
+        border: 1px solid transparent !important;
+        height: 38px !important; /* Fixed slim height */
+        box-sizing: border-box !important;
+    }
+    .atlas-glass-panel .input-box:focus-within { border: 1px solid #3498db !important; background: #fff !important; }
+    .atlas-glass-panel .input-box i { color: #5f6368 !important; width: 16px !important; font-size: 0.9rem !important;}
+    
+    /* Protect the actual typing area from global CSS */
+    .atlas-glass-panel .input-box input {
+        border: none !important;
+        background: transparent !important;
+        width: 100% !important;
+        height: 100% !important;
+        padding-left: 8px !important;
+        outline: none !important;
+        font-size: 0.9rem !important; 
+        box-shadow: none !important;
+        margin: 0 !important;
+    }
+
+    /* Action Buttons - FORCED SMALLER */
+    .atlas-glass-panel .btn {
+        padding: 0 12px !important;
+        height: 38px !important; /* Perfectly matches input height */
+        border: none !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+        font-size: 0.9rem !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+    .atlas-glass-panel .btn:active { transform: scale(0.98) !important; }
+    .atlas-glass-panel .btn-primary { background: #3498db !important; color: white !important; margin-top: 10px !important; }
+    .atlas-glass-panel .btn-primary:hover { background: #2980b9 !important; }
+    .atlas-glass-panel .btn-secondary { background: #e8f0fe !important; color: #1a73e8 !important; }
+    .atlas-glass-panel .btn-secondary:hover { background: #d2e3fc !important; }
+
+    .atlas-glass-panel #statusMsg { 
+        font-size: 0.8rem !important; 
+        margin: 10px 0 0 0 !important; 
+        color: #666 !important; 
+        text-align: center !important; 
+        font-weight: 500 !important; 
+    }
+
+    /* Custom Map Popups */
+    .leaflet-popup-content-wrapper { border-radius: 10px !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
+    .leaflet-popup-content { font-family: inherit !important; font-size: 0.95rem !important; margin: 12px !important; }
+
+    /* Mobile Optimization */
+    @media (max-width: 768px) {
+        .atlas-glass-panel {
+            top: auto !important;
+            bottom: 20px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            width: 92% !important;
+            max-width: none !important;
+        }
+    }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <header class="main-header">
+        <a href="{% url 'dashboard' %}" class="logo-area">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <h1>Campus Atlas</h1>
+        </a>
+        
+        <nav>
+            {% if user.is_authenticated %}
+                {% url 'dashboard' as dashboard_url %}
+                {% if request.path != dashboard_url %}
+                    <a href="{{ dashboard_url }}"><i class="fa-solid fa-map"></i> Map</a>
+                {% endif %}
+                
+                {% url 'profile' as profile_url %}
+                {% if request.path != profile_url %}
+                    <a href="{{ profile_url }}"><i class="fa-solid fa-user"></i> Profile</a>
+                {% endif %}
+                
+                {% if user.is_staff %}
+                    <a href="/admin/"><i class="fa-solid fa-screwdriver-wrench" style="color: #e74c3c;"></i> Admin Portal</a>
+                {% endif %}
+                
+                <a href="{% url 'logout' %}" class="auth-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+            
+            {% else %}
+                {% url 'login' as login_url %}
+                {% if request.path != login_url %}
+                    <a href="{{ login_url }}">Login</a>
+                {% endif %}
+                
+                {% url 'signup' as signup_url %}
+                {% if request.path != signup_url %}
+                    <a href="{{ signup_url }}" class="auth-btn">Signup</a>
+                {% endif %}
+            {% endif %}
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

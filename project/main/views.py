@@ -1,39 +1,43 @@
-
+import json
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from .models import Location
+
+@login_required(login_url='login')
+def profile_view(request):
+    return render(request, 'main/profile.html')
 
 def home(request):
-    return render(request, 'main/index.html')
+    # If the user is logged in, send them straight to the map
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    # If not logged in, send them to login (or you can keep it rendering index.html)
+    return redirect('login')
 
 def signup_view(request):
     if request.method == "POST":
         username = request.POST['username']
         password = request.POST['password']
-
         if User.objects.filter(username=username).exists():
-            return render(request, 'main/signup.html', {'error': 'Username already exists. Please choose another.'})
-
+            return render(request, 'main/signup.html', {'error': 'Username already exists.'})
         user = User.objects.create_user(username=username, password=password)
         user.save()
         return redirect('login')
-
     return render(request, 'main/signup.html')
 
 def login_view(request):
     if request.method == "POST":
         username = request.POST['username']
         password = request.POST['password']
-
         user = authenticate(request, username=username, password=password)
-
         if user is not None:
             login(request, user)
             return redirect('dashboard')
         else:
-            return render(request, 'main/login.html', {'error': 'Invalid Credentials. Please try again.'})
-
+            return render(request, 'main/login.html', {'error': 'Invalid Credentials.'})
     return render(request, 'main/login.html')
 
 def logout_view(request):
@@ -42,8 +46,24 @@ def logout_view(request):
 
 @login_required(login_url='login')
 def dashboard_view(request):
-    return render(request, 'main/dashboard.html')
+    # This must be indented exactly 4 spaces
+    locations = list(Location.objects.values('name', 'description', 'latitude', 'longitude', 'is_landmark'))
+    
+    # This must also be indented exactly 4 spaces, perfectly aligned with the line above
+    return render(request, 'main/dashboard.html', {
+        'locations_json': locations
+    })
 
 @login_required(login_url='login')
-def search(request):
-    return render(request, 'main/search.html')
+def search_location_api(request):
+    query = request.GET.get('q', '')
+    location = Location.objects.filter(name__icontains=query).first()
+    if location:
+        return JsonResponse({
+            'success': True,
+            'lat': location.latitude,
+            'lng': location.longitude,
+            'name': location.name,
+            'desc': location.description or ""
+        })
+    return JsonResponse({'success': False, 'message': 'Location not found'})

@@ -1,0 +1,110 @@
+{% extends 'main/base.html' %}
+
+{% block extra_head %}
+<style>
+    .profile-container {
+        height: calc(100vh - 70px); /* Subtracts the navbar height */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+
+    .profile-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 350px;
+        text-align: center;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        background: #e8f0fe;
+        color: #3498db;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        margin: 0 auto 20px auto;
+    }
+
+    .profile-card h2 {
+        margin: 0 0 5px 0;
+        color: #2c3e50;
+        font-weight: 700;
+    }
+
+    .profile-card p {
+        color: #7f8c8d;
+        margin: 0 0 30px 0;
+        font-size: 0.9rem;
+    }
+
+    .profile-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .btn-action {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 12px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+    }
+
+    .btn-password {
+        background-color: #f1f3f4;
+        color: #2c3e50;
+    }
+
+    .btn-password:hover { background-color: #e2e6ea; }
+
+    .btn-logout {
+        background-color: #ffeaea;
+        color: #e74c3c;
+    }
+
+    .btn-logout:hover { background-color: #ffdddd; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-card">
+        <div class="profile-avatar">
+            <i class="fa-solid fa-user"></i>
+        </div>
+        <h2>{{ user.username }}</h2>
+        <p>Campus Atlas Member</p>
+
+        <div class="profile-actions">
+            <a href="{% url 'password_change' %}" class="btn-action btn-password">
+                <i class="fa-solid fa-key"></i> Edit Password
+            </a>
+            
+            <a href="{% url 'logout' %}" class="btn-action btn-logout">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
