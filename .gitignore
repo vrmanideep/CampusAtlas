@@ -1,3 +1,5 @@
 project/db.sqlite3
 project/__pycache__/
 project/*/ __pycache__/
+venv/
+.venv/
