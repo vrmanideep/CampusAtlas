@@ -1,5 +1,19 @@
-project/db.sqlite3
-project/__pycache__/
-project/*/ __pycache__/
+# Ignore the SQLite database
+*.sqlite3
+db.sqlite3
+
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+
+# Ignore virtual environments
 venv/
-.venv/
+env/
+.env
+
+# Ignore IDE settings
+.vscode/
+.idea/
+
+apikey
+apikey.txt
