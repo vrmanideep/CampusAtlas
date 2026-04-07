@@ -2,354 +2,189 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
 <style>
-    body, html { height: 100%; margin: 0; overflow: hidden; }
+    body, html { margin: 0; overflow: hidden; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    #map { position: fixed; top: 70px; bottom: 0; width: 100%; z-index: 1; background: white; }
     
-    /* --- FIX: FULL SCREEN MAP OVERRIDES --- */
-    footer { display: none !important; }
-    main, .container, .content-wrapper { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+    /* UI Panels */
+    .panel, .modal-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+    .panel { position: absolute; top: 90px; left: 20px; width: 300px; z-index: 999; }
     
-    nav, header, .navbar { 
-        position: relative !important; 
-        z-index: 9999 !important; 
-        background-color: #fff !important; 
-    }
-
-    #map { 
-        position: fixed; 
-        top: 70px; 
-        left: 0; 
-        right: 0; 
-        bottom: 0; 
-        height: auto !important; 
-        width: 100vw !important; 
-        z-index: 1; 
-    }
-
-    /* --- RENAMED: Armored Glass Panel --- */
-    .atlas-glass-panel {
-        position: absolute !important;
-        top: 80px !important;
-        left: 20px !important;
-        z-index: 9999 !important;
-        background: rgba(255, 255, 255, 0.95) !important;
-        backdrop-filter: blur(10px);
-        padding: 20px !important;
-        border-radius: 16px !important;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important;
-        width: 320px !important;
-        display: block !important;
-        box-sizing: border-box !important;
-    }
-
-    .panel-header { font-size: 1.2rem; color: #1a252f; margin: 0 0 15px 0; font-weight: 600; }
+    /* Welcome Overlay */
+    #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+    .close-modal { position: absolute; top: 10px; right: 15px; font-size: 28px; cursor: pointer; color: #95a5a6; }
+    .close-modal:hover { color: #e74c3c; }
     
-    /* Styled Input Fields */
-    .input-box {
-        display: flex;
-        align-items: center;
-        background: #f1f3f4;
-        border-radius: 8px;
-        padding: 10px 15px;
-        margin-bottom: 12px;
-        border: 1px solid transparent;
-        transition: border 0.3s;
-    }
-    .input-box:focus-within { border: 1px solid #3498db; background: #fff; }
-    .input-box i { color: #5f6368; width: 20px; }
-    .input-box input {
-        border: none;
-        background: transparent;
-        width: 100%;
-        padding-left: 10px;
-        outline: none;
-        font-size: 0.95rem;
-    }
-
-    /* Action Buttons */
-    .btn-row { display: flex; gap: 10px; margin-top: 5px; }
-    .btn {
-        flex: 1;
-        padding: 12px;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: transform 0.1s, opacity 0.2s;
-    }
-    .btn:active { transform: scale(0.98); }
-    .btn-primary { background: #3498db; color: white; }
-    .btn-primary:hover { opacity: 0.9; }
-    .btn-secondary { background: #e8f0fe; color: #1a73e8; }
-    .btn-secondary:hover { background: #d2e3fc; }
-
-    #statusMsg { font-size: 0.85rem; margin-top: 12px; color: #666; text-align: center; font-weight: 500; }
-
-    /* Custom Map Popups */
-    .leaflet-popup-content-wrapper { border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    .leaflet-popup-content { font-family: inherit; font-size: 1rem; margin: 15px; }
-
-    /* Mobile Optimization */
-    @media (max-width: 768px) {
-        .atlas-glass-panel {
-            top: auto !important;
-            bottom: 20px !important;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
-            width: 90% !important;
-        }
-    }
-
-    /* Custom Black Grab Cursors */
-    .leaflet-container {
-        cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'><path d='M21 11.5v-2c0-.82-.68-1.5-1.5-1.5s-1.5.68-1.5 1.5v2h-1v-4c0-.82-.68-1.5-1.5-1.5s-1.5.68-1.5 1.5v4h-1v-5.5c0-.82-.68-1.5-1.5-1.5s-1.5.68-1.5 1.5v10.51l-4.48-4.48c-.29-.29-.77-.29-1.06 0-.29.29-.29.77 0 1.06l6.54 6.54c1.13 1.13 2.66 1.76 4.24 1.76H17c2.21 0 4-1.79 4-4v-7.83z' fill='black' stroke='white' stroke-width='1'/></svg>") 14 14, auto !important;
-    }
-    .leaflet-dragging .leaflet-container {
-        cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'><path d='M21 11.5v-2c0-.82-.68-1.5-1.5-1.5s-1.5.68-1.5 1.5v2h-1v-4c0-.82-.68-1.5-1.5-1.5s-1.5.68-1.5 1.5v4h-1v-5.5c0-.82-.68-1.5-1.5-1.5s-1.5.68-1.5 1.5v10.51l-4.48-4.48c-.29-.29-.77-.29-1.06 0-.29.29-.29.77 0 1.06l6.54 6.54c1.13 1.13 2.66 1.76 4.24 1.76H17c2.21 0 4-1.79 4-4v-7.83z' fill='%23333' stroke='white' stroke-width='1'/></svg>") 14 14, auto !important;
-    }
+    /* Inputs & Buttons */
+    input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; outline: none; }
+    input:focus { border-color: #3498db; }
+    .btn { width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
     
-    /* Auto-complete Dropdown Styling */
-    .search-dropdown {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        width: 100%;
-        background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(15px);
-        border-radius: 8px;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-        list-style: none;
-        padding: 0;
-        margin: 5px 0 0 0;
-        max-height: 200px;
-        overflow-y: auto;
-        z-index: 1005;
+    /* Dropdowns */
+    .dropdown { position: absolute; width: 100%; background: white; list-style: none; padding: 0; margin: 0; max-height: 150px; overflow-y: auto; box-shadow: 0 5px 10px rgba(0,0,0,0.1); z-index: 1000; border-radius: 0 0 8px 8px; }
+    .dropdown li { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 14px; }
+    .dropdown li:hover { background: #f8f9fa; color: #3498db; }
+
+    /* Navigation Banner */
+    #navBanner {
+        position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+        background: #27ae60; color: white; padding: 15px 25px;
+        border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        z-index: 10000; text-align: center; font-size: 1.1rem;
+        min-width: 280px; display: none;
     }
-    .search-dropdown li {
-        padding: 12px 15px;
-        border-bottom: 1px solid #f1f3f4;
-        cursor: pointer;
-        font-size: 0.95rem;
-        color: #2c3e50;
-        transition: background 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .search-dropdown li:last-child { border-bottom: none; }
-    .search-dropdown li:hover { background: #e8f0fe; color: #1a73e8; }
-    .search-dropdown li strong { color: #3498db; }
+
+    /* Layer Control Customization */
+    .leaflet-control-layers { margin-top: 80px !important; border-radius: 8px !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="atlas-glass-panel">
-    <h2 class="panel-header"><i class="fa-solid fa-route" style="color: #3498db;"></i> Campus Navigator</h2>
-
-    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-        
-        <div style="position: relative; flex-grow: 1;">
-            <div class="input-box" style="margin-bottom: 0;">
-                <i class="fa-solid fa-flag-checkered"></i>
-                <input type="text" id="endNode" placeholder="Where to?" autocomplete="off">
-            </div>
-            <ul id="searchDropdown" class="search-dropdown" style="display: none;"></ul>
+<div id="overlay" style="display:none;">
+    <div class="modal-card" style="position: relative;">
+        <span class="close-modal" onclick="$('overlay').style.display='none'">&times;</span>
+        <h3 style="margin-top:0;">Campus Atlas</h3>
+        <p style="color:#666; font-size:14px;">Where would you like to go?</p>
+        <div style="position: relative;">
+            <input type="text" id="wSearch" placeholder="Search rooms, labs, or buildings..." autocomplete="off">
+            <ul id="wDrop" class="dropdown" style="display:none;"></ul>
         </div>
-        
-        <button id="locateMeBtn" class="btn btn-secondary" style="padding: 10px 15px; flex-grow: 0;" title="Center on my location">
-            <i class="fa-solid fa-location-crosshairs"></i>
-        </button>
+        <button class="btn" style="margin-top:10px;" onclick="$('overlay').style.display='none'">Just Explore</button>
     </div>
+</div>
 
-    <button id="routeBtn" class="btn btn-primary" style="width: 100%;">Get Directions</button>
-    
-    <p id="statusMsg"><i class="fa-solid fa-satellite-dish fa-beat"></i> Finding your location...</p>
+<div class="panel">
+    <h3 style="margin-top:0; color:#2c3e50;">Navigator</h3>
+    <div style="position: relative;">
+        <input type="text" id="mSearch" placeholder="Enter destination..." autocomplete="off">
+        <ul id="mDrop" class="dropdown" style="display:none;"></ul>
+    </div>
+    <p id="msg" style="color:#7f8c8d; font-size:13px; margin:5px 0 0 0;"><i class="fa-solid fa-location-arrow"></i> Initializing GPS...</p>
 </div>
 
 <div id="map"></div>
+<div id="navBanner"></div>
 
-{{ locations_json|json_script:"locations-data" }}
+{{ locations_json|json_script:"locs" }}
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDQP0Pap_Eyt_zDCnGGGPQvuaHpdlCf46Q&libraries=places"></script>
+<script src="https://unpkg.com/leaflet.gridlayer.googlemutant@latest/dist/Leaflet.GoogleMutant.js"></script>
+
 <script>
-    var map = L.map('map', {zoomControl: false}).setView([16.49495, 80.49911], 16); 
+    const $ = id => document.getElementById(id);
+    
+    // 1. Init Map with View Toggle
+    const map = L.map('map', {zoomControl: false}).setView([16.494, 80.499], 16);
     L.control.zoom({position: 'topright'}).addTo(map);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-        subdomains: 'abcd',
-        maxZoom: 20
+    const roadmap = L.gridLayer.googleMutant({type: 'roadmap'});
+    const satellite = L.gridLayer.googleMutant({type: 'satellite'});
+    roadmap.addTo(map);
+
+    L.control.layers({"Street View": roadmap, "Satellite": satellite}, null, {
+        position: 'topright', collapsed: false 
     }).addTo(map);
 
+    // Global Vars
+    let uLat, uLng, marker, rc, steps=[], currStep=0, routeCoords=[];
+    const dbLocs = JSON.parse($('locs').textContent);
 
-    // --- CONTINUOUS AUTO-TRACKING ---
-    let userLat = null;
-    let userLng = null;
-    let userLocationMarker = null;
+    // 2. GPS Tracking
+    map.locate({setView: true, maxZoom: 18, watch: true, enableHighAccuracy: true});
+    map.on('locationfound', e => {
+        uLat = e.latlng.lat; uLng = e.latlng.lng;
+        if (marker) marker.setLatLng(e.latlng);
+        else marker = L.circleMarker(e.latlng, {radius:8, color:'white', fillColor:'#27ae60', fillOpacity:1, weight:3}).addTo(map);
+        $('msg').innerHTML = "🟢 GPS Active";
 
-    map.locate({setView: true, maxZoom: 18, watch: true});
-
-    map.on('locationfound', function(e) {
-        userLat = e.latlng.lat;
-        userLng = e.latlng.lng;
-
-        if (userLocationMarker) {
-            userLocationMarker.setLatLng(e.latlng);
-        } else {
-            userLocationMarker = L.circleMarker(e.latlng, {
-                radius: 8, fillColor: '#27ae60', color: '#fff', weight: 3, opacity: 1, fillOpacity: 1
-            }).addTo(map).bindPopup("<strong>You are here</strong>");
+        // Live Turn Logic
+        if (steps.length > 0 && currStep < steps.length) {
+            let distToTarget = map.distance([uLat, uLng], routeCoords[steps[currStep].index]);
+            if (distToTarget < 15) { currStep++; updateNav(); }
         }
+    });
+
+    // 3. Admin Functionality
+    if ("{{ user.is_superuser }}" === "True") {
+        map.on('contextmenu', e => {
+            if (confirm(`Add new location at ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}?`)) {
+                window.location.href = `/admin/main/location/add/?latitude=${e.latlng.lat}&longitude=${e.latlng.lng}`;
+            }
+        });
+    }
+
+    // 4. Search & Routing
+    const auto = new google.maps.places.AutocompleteService();
+    const places = new google.maps.places.PlacesService(document.createElement('div'));
+
+    const drawRoute = (lat, lng) => {
+        if (!uLat) return alert("Waiting for GPS signal...");
+        if (rc) map.removeControl(rc);
         
-        const msg = document.getElementById('statusMsg');
-        if (msg.innerHTML.includes('Finding')) {
-            msg.innerHTML = `<i class="fa-solid fa-location-dot"></i> GPS Active`;
-            msg.style.color = "#27ae60";
-        }
-    });
-
-    map.on('locationerror', function(e) {
-        document.getElementById('statusMsg').innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Location access denied`;
-        document.getElementById('statusMsg').style.color = "#e74c3c";
-    });
-
-    // --- MANUAL GPS RE-CENTER BUTTON ---
-    document.getElementById('locateMeBtn').onclick = function() {
-        if (userLat && userLng) {
-            map.flyTo([userLat, userLng], 18, {duration: 1.0});
-        } else {
-            document.getElementById('statusMsg').innerHTML = '<i class="fa-solid fa-satellite-dish fa-beat"></i> Locating...';
-            map.locate({setView: true, maxZoom: 18, watch: true});
-        }
+        rc = L.Routing.control({
+            waypoints: [L.latLng(uLat, uLng), L.latLng(lat, lng)],
+            router: L.Routing.osrmv1({ profile: 'foot' }),
+            show: false,
+            addWaypoints: false
+        }).on('routesfound', e => {
+            let r = e.routes[0];
+            routeCoords = r.coordinates;
+            steps = r.instructions.filter(s => /turn|arrive/i.test(s.text));
+            currStep = 0;
+            updateNav();
+            map.fitBounds(L.polyline(routeCoords).getBounds(), {padding: [50, 50]});
+        }).addTo(map);
     };
 
-
-    // --- LOAD ONLY FAMOUS MARKERS ---
-    const locations = JSON.parse(document.getElementById('locations-data').textContent);
-    
-    locations.forEach(loc => {
-        if (loc.is_landmark) {
-            let landmarkIcon = L.divIcon({
-                html: `<div style="background:#f39c12; width:14px; height:14px; border-radius:50%; border:2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.4);"></div>`,
-                className: '',
-                iconSize: [18, 18],
-                iconAnchor: [9, 9]
-            });
-
-            let marker = L.marker([loc.latitude, loc.longitude], {icon: landmarkIcon}).addTo(map);
-            
-            marker.bindPopup(`<strong style="font-size:1.1rem; color:#2c3e50;">${loc.name}</strong><br><span style="color:#27ae60; font-size:0.85rem;"><i class="fa-solid fa-route"></i> Tap to get directions</span>`);
-
-            marker.on('click', function() {
-                document.getElementById('endNode').value = loc.name;
-                
-                if (userLat && userLng) {
-                    document.getElementById('routeBtn').click();
-                } else {
-                    const msg = document.getElementById('statusMsg');
-                    msg.innerHTML = "Destination set. Waiting for GPS lock...";
-                    msg.style.color = "#f39c12";
-                }
-            });
+    const updateNav = () => {
+        const b = $('navBanner');
+        if (currStep >= steps.length) {
+            b.innerHTML = "🏁 You have arrived!";
+            return setTimeout(() => b.style.display='none', 5000);
         }
-    });
-
-
-    // --- A* ROUTE HOOK ---
-    let routeLine = null;
-    document.getElementById('routeBtn').onclick = function() {
-        const end = document.getElementById('endNode').value;
-        const msg = document.getElementById('statusMsg');
-
-        if (!end) {
-            msg.innerText = "Please enter a destination.";
-            msg.style.color = "#e74c3c";
-            return;
-        }
-
-        if (!userLat || !userLng) {
-            msg.innerHTML = '<i class="fa-solid fa-satellite"></i> Waiting for GPS signal...';
-            msg.style.color = "#f39c12";
-            return;
-        }
-
-        const startCoords = `${userLat},${userLng}`;
-
-        msg.innerHTML = '<i class="fa-solid fa-compass fa-spin"></i> Calculating path...';
-        msg.style.color = "#555";
-
-        fetch(`/api/get_route/?start=${encodeURIComponent(startCoords)}&end=${encodeURIComponent(end)}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    msg.innerHTML = `<i class="fa-solid fa-person-walking"></i> Path Found: ${data.distance}m`;
-                    msg.style.color = "#3498db";
-                    
-                    if (routeLine) map.removeLayer(routeLine);
-
-                    routeLine = L.polyline(data.coordinates, {
-                        color: '#3498db', weight: 6, opacity: 0.8, lineJoin: 'round'
-                    }).addTo(map);
-
-                    map.fitBounds(routeLine.getBounds(), {padding: [50, 50]});
-                } else {
-                    msg.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> Route not available.`;
-                    msg.style.color = "#e74c3c";
-                }
-            }).catch(() => {
-                msg.innerHTML = `<i class="fa-solid fa-plug-circle-xmark"></i> Waiting on Backend API`;
-                msg.style.color = "#f39c12";
-            });
+        b.style.display = 'block';
+        let txt = steps[currStep].text.replace(/Head (north|south|east|west\w*)/gi, "Start walking");
+        txt = txt.replace(/footway|pedestrian/gi, "path");
+        b.innerHTML = `<strong>${txt}</strong><br><small>${Math.round(steps[currStep].distance)}m remaining</small>`;
     };
 
-    // --- LIVE AUTO-COMPLETE SEARCH ---
-    const searchInput = document.getElementById('endNode');
-    const searchDropdown = document.getElementById('searchDropdown');
+    const setupSearch = (inp, drop) => {
+        $(inp).oninput = e => {
+            let q = e.target.value.toLowerCase();
+            $(drop).innerHTML = '';
+            if (!q) return $(drop).style.display='none';
 
-    searchInput.addEventListener('input', function() {
-        const query = this.value.toLowerCase();
-        searchDropdown.innerHTML = ''; 
-        
-        if (!query) {
-            searchDropdown.style.display = 'none';
-            return;
-        }
-
-        const matches = locations.filter(loc => loc.name.toLowerCase().includes(query));
-
-        if (matches.length > 0) {
-            matches.forEach(loc => {
-                const li = document.createElement('li');
-                const regex = new RegExp(`(${query})`, "gi");
-                const highlightedName = loc.name.replace(regex, "<strong>$1</strong>");
-                
-                li.innerHTML = `<i class="fa-solid fa-location-dot" style="color:#bdc3c7;"></i> <span>${highlightedName}</span>`;
-                
-                li.onclick = function() {
-                    searchInput.value = loc.name;
-                    searchDropdown.style.display = 'none';
-                    if (userLat && userLng) {
-                        document.getElementById('routeBtn').click();
-                    }
-                };
-                searchDropdown.appendChild(li);
+            let local = dbLocs.filter(l => l.name.toLowerCase().includes(q));
+            if (local.length > 0) renderList(local, drop, true);
+            else auto.getPlacePredictions({input:q}, p => {
+                if (p) renderList(p.map(x=>({name:x.description, id:x.place_id})), drop, false);
             });
-            searchDropdown.style.display = 'block';
-        } else {
-            const li = document.createElement('li');
-            li.innerHTML = "<em>No locations found</em>";
-            li.style.color = "#95a5a6";
-            li.style.pointerEvents = "none";
-            searchDropdown.appendChild(li);
-            searchDropdown.style.display = 'block';
-        }
-    });
+        };
+    };
 
-    document.addEventListener('click', function(e) {
-        if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
-            searchDropdown.style.display = 'none';
-        }
-    });
+    const renderList = (data, drop, isLoc) => {
+        $(drop).innerHTML = '';
+        data.slice(0, 5).forEach(item => {
+            let li = document.createElement('li');
+            li.innerHTML = isLoc ? `📍 <b>${item.name}</b>` : `🌍 ${item.name}`;
+            li.onclick = () => {
+                $('overlay').style.display='none';
+                $(drop).style.display='none';
+                $('mSearch').value = item.name;
+                if (isLoc) drawRoute(item.latitude, item.longitude);
+                else places.getDetails({placeId:item.id}, res => drawRoute(res.geometry.location.lat(), res.geometry.location.lng()));
+            };
+            $(drop).appendChild(li);
+        });
+        $(drop).style.display = 'block';
+    };
+
+    // Initialize
+    if (!sessionStorage.getItem('seen')) { $('overlay').style.display='flex'; sessionStorage.setItem('seen','1'); }
+    setupSearch('wSearch', 'wDrop');
+    setupSearch('mSearch', 'mDrop');
 </script>
 {% endblock %}
