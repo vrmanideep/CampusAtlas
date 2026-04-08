@@ -70,7 +70,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDQP0Pap_Eyt_zDCnGGGPQvuaHpdlCf46Q&libraries=places"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDQP0Pap_Eyt_zDCnGGGPQvuaHpdlCf46Q"></script>
 <script src="https://unpkg.com/leaflet.gridlayer.googlemutant@latest/dist/Leaflet.GoogleMutant.js"></script>
 
 <script>
@@ -123,10 +123,7 @@
         });
     }
 
-    // 5. Search & Routing
-    const auto = new google.maps.places.AutocompleteService();
-    const places = new google.maps.places.PlacesService(document.createElement('div'));
-
+    // 5. Routing Engine
     const drawRoute = (lat, lng) => {
         if (!uLat) return alert("Waiting for GPS signal...");
         if (rc) map.removeControl(rc);
@@ -158,38 +155,42 @@
         b.innerHTML = `<strong>${txt}</strong><br><small>${Math.round(steps[currStep].distance)}m remaining</small>`;
     };
 
+    // 6. Strict Local Search Logic
     const setupSearch = (inp, drop) => {
         $(inp).oninput = e => {
-            let q = e.target.value.toLowerCase();
+            let q = e.target.value.toLowerCase().trim();
             $(drop).innerHTML = '';
             if (!q) return $(drop).style.display='none';
 
             let local = dbLocs.filter(l => l.name.toLowerCase().includes(q));
-            if (local.length > 0) renderList(local, drop, true);
-            else auto.getPlacePredictions({input:q}, p => {
-                if (p) renderList(p.map(x=>({name:x.description, id:x.place_id})), drop, false);
-            });
+            
+            if (local.length > 0) {
+                renderList(local, drop);
+            } else {
+                // Show "Not Found" if it doesn't match the database
+                $(drop).innerHTML = `<li style="color: #e74c3c; cursor: default;">❌ Location not found</li>`;
+                $(drop).style.display = 'block';
+            }
         };
     };
 
-    const renderList = (data, drop, isLoc) => {
+    const renderList = (data, drop) => {
         $(drop).innerHTML = '';
         data.slice(0, 5).forEach(item => {
             let li = document.createElement('li');
-            li.innerHTML = isLoc ? `📍 <b>${item.name}</b>` : `🌍 ${item.name}`;
+            li.innerHTML = `📍 <b>${item.name}</b>`;
             li.onclick = () => {
                 $('overlay').style.display='none';
                 $(drop).style.display='none';
                 $('mSearch').value = item.name;
-                if (isLoc) drawRoute(item.latitude, item.longitude);
-                else places.getDetails({placeId:item.id}, res => drawRoute(res.geometry.location.lat(), res.geometry.location.lng()));
+                drawRoute(item.latitude, item.longitude);
             };
             $(drop).appendChild(li);
         });
         $(drop).style.display = 'block';
     };
 
-    // 6. Initialize
+    // 7. Initialize
     $('overlay').style.display = 'flex';
     setupSearch('wSearch', 'wDrop');
     setupSearch('mSearch', 'mDrop');
