@@ -76,12 +76,19 @@
 <script>
     const $ = id => document.getElementById(id);
     
-    // 1. Init Map with View Toggle
+    // 1. Define the style to hide all default Google POIs
+    const hidePOIs = [
+        { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+        { featureType: "transit", stylers: [{ visibility: "off" }] }
+    ];
+
+    // 2. Init Map and Google Layers with Styles
     const map = L.map('map', {zoomControl: false}).setView([16.494, 80.499], 16);
     L.control.zoom({position: 'topright'}).addTo(map);
 
-    const roadmap = L.gridLayer.googleMutant({type: 'roadmap'});
-    const satellite = L.gridLayer.googleMutant({type: 'satellite'});
+    const roadmap = L.gridLayer.googleMutant({ type: 'roadmap', styles: hidePOIs });
+    const satellite = L.gridLayer.googleMutant({ type: 'satellite', styles: hidePOIs });
+    
     roadmap.addTo(map);
 
     L.control.layers({"Street View": roadmap, "Satellite": satellite}, null, {
@@ -92,7 +99,7 @@
     let uLat, uLng, marker, rc, steps=[], currStep=0, routeCoords=[];
     const dbLocs = JSON.parse($('locs').textContent);
 
-    // 2. GPS Tracking
+    // 3. GPS Tracking
     map.locate({setView: true, maxZoom: 18, watch: true, enableHighAccuracy: true});
     map.on('locationfound', e => {
         uLat = e.latlng.lat; uLng = e.latlng.lng;
@@ -107,7 +114,7 @@
         }
     });
 
-    // 3. Admin Functionality
+    // 4. Admin Functionality
     if ("{{ user.is_superuser }}" === "True") {
         map.on('contextmenu', e => {
             if (confirm(`Add new location at ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}?`)) {
@@ -116,7 +123,7 @@
         });
     }
 
-    // 4. Search & Routing
+    // 5. Search & Routing
     const auto = new google.maps.places.AutocompleteService();
     const places = new google.maps.places.PlacesService(document.createElement('div'));
 
@@ -182,8 +189,8 @@
         $(drop).style.display = 'block';
     };
 
-    // Initialize
-    if (!sessionStorage.getItem('seen')) { $('overlay').style.display='flex'; sessionStorage.setItem('seen','1'); }
+    // 6. Initialize
+    $('overlay').style.display = 'flex';
     setupSearch('wSearch', 'wDrop');
     setupSearch('mSearch', 'mDrop');
 </script>
