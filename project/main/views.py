@@ -1,5 +1,6 @@
 import json
 from django.shortcuts import render, redirect
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -18,15 +19,16 @@ def home(request):
     return redirect('login')
 
 def signup_view(request):
-    if request.method == "POST":
-        username = request.POST['username']
-        password = request.POST['password']
-        if User.objects.filter(username=username).exists():
-            return render(request, 'main/signup.html', {'error': 'Username already exists.'})
-        user = User.objects.create_user(username=username, password=password)
-        user.save()
-        return redirect('login')
-    return render(request, 'main/signup.html')
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save() # Creates the user and hashes the password securely
+            messages.success(request, 'Account created successfully! Please log in.')
+            return redirect('login')
+    else:
+        form = UserCreationForm()
+        
+    return render(request, 'main/signup.html', {'form': form})
 
 def login_view(request):
     if request.method == "POST":
